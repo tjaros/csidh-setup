@@ -1,0 +1,25 @@
+diff --git a/hardware/victims/firmware/hal/stm32f3/Makefile.stm32f3 b/hardware/victims/firmware/hal/stm32f3/Makefile.stm32f3
+index 00954124..6690e8f1 100644
+--- a/hardware/victims/firmware/hal/stm32f3/Makefile.stm32f3
++++ b/hardware/victims/firmware/hal/stm32f3/Makefile.stm32f3
+@@ -18,9 +18,9 @@ SIZE = arm-none-eabi-size
+ AR = arm-none-eabi-ar rcs
+ NM = arm-none-eabi-nm
+ 
+-ifeq ($(MCU_CLK), INT)
+-  CFLAGS += -DUSE_INTERNAL_CLK
+-endif
++#ifeq ($(MCU_CLK), INT)
++#  CFLAGS += -DUSE_INTERNAL_CLK
++#endif
+ 
+ #Output Format = Binary for this target
+ FORMAT = binary
+@@ -31,5 +31,5 @@ ASFLAGS += -mthumb -mfloat-abi=soft -fmessage-length=0 -ffunction-sections
+ 
+ CDEFS += -DSTM32F303xC -DSTM32F3 -DSTM32 -DDEBUG
+ CPPDEFS += -DSTM32F303xC -DSTM32F3 -DSTM32 -DDEBUG
++LDFLAGS += --specs=nano.specs --specs=nosys.specs -T $(HALPATH)/stm32f3/LinkerScript.ld -Wl,--gc-sections -lm
+ 
+-LDFLAGS += --specs=nano.specs --specs=nosys.specs -T $(HALPATH)/stm32f3/LinkerScript.ld -Wl,--gc-sections -lm
+\ No newline at end of file
