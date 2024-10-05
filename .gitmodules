@@ -1,3 +1,6 @@
 [submodule "chipwhisperer"]
 	path = chipwhisperer
 	url = ./chipwhisperer
+[submodule "csidh-target"]
+	path = csidh-target
+	url = ./csidh-target
