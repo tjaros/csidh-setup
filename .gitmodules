@@ -3,4 +3,4 @@
 	url = ./chipwhisperer
 [submodule "csidh-target"]
 	path = csidh-target
-	url = ./csidh-target
+	url = git@github.com:tjaros/csidh-target.git
