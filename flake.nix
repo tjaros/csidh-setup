@@ -19,14 +19,6 @@
 
           python-lsp-server
           python-lsp-server.optional-dependencies.all
-
-          # The lsp-bridge plugin has nasty python dependencies
-          # not sure how to isolate them for emacs to use and
-          # and at the same time having working direnv shells
-          epc
-          orjson
-          sexpdata
-          paramiko
         ]);
     in {
       devShells.default = pkgs.mkShell {
@@ -36,6 +28,7 @@
           gcc-arm-embedded-9
           cmake
           sage
+		  packer
         ];
 
         shellHook = ''
