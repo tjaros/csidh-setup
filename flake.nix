@@ -9,16 +9,18 @@
     flake-utils,
   }:
     flake-utils.lib.eachDefaultSystem (system: let
+      libPath = with pkgs;
+        lib.makeLibraryPath [
+          # load external libraries that you need in your rust project here
+          hidapi
+          libusb1
+          stdenv.cc.cc
+        ];
       pkgs = nixpkgs.legacyPackages.${system};
-      python = pkgs.python310.withPackages (ps:
+      python = pkgs.python311.withPackages (ps:
         with ps; [
           virtualenv
           pip
-          ipykernel
-          notebook
-
-          python-lsp-server
-          python-lsp-server.optional-dependencies.all
         ]);
     in {
       devShells.default = pkgs.mkShell {
@@ -28,7 +30,7 @@
           gcc-arm-embedded-9
           cmake
           sage
-		  packer
+          packer
         ];
 
         shellHook = ''
@@ -40,17 +42,7 @@
           unset SOURCE_DATE_EPOCH
         '';
 
-        nativeBuildInputs = with pkgs; [
-          pkg-config
-        ];
-
-        buildInputs = with pkgs; [
-          hidapi
-          libusb1
-          glibc
-        ];
-
-        LD_LIBRARY_PATH = "${pkgs.libusb}/lib";
+        LD_LIBRARY_PATH = libPath;
       };
     });
 }
