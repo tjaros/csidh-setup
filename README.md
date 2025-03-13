@@ -43,7 +43,7 @@ pyenv install 3.10.13
 pyenv virtualenv 3.10.13 cw
 pyenv activate cw
 
-cd chipwhisperer
+cd csidh-setup/chipwhisperer
 sudo cp hardware/50-newae.rules /etc/udev/rules.d/50-newae.rules
 sudo udevadm control --reload-rules
 sudo groupadd -f chipwhisperer

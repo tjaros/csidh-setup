@@ -1,6 +1,6 @@
 [submodule "chipwhisperer"]
 	path = chipwhisperer
-	url = git@github.com:newaetech/chipwhisperer.git
+	url = https://github.com/newaetech/chipwhisperer.git
 [submodule "csidh-target"]
 	path = csidh-target
-	url = git@github.com:tjaros/csidh-target.git
+	url = https://github.com/tjaros/csidh-target.git
