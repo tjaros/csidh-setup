@@ -1,4 +1,3 @@
-import logging
 import os
 import struct
 from typing import List, Optional
@@ -10,8 +9,11 @@ import time
 
 
 class CSIDHBase:
-    SRC_PATH = "../../../src/"
+    """Base class for CSIDH wrappers."""
 
+    SRC_PATH = "../../../csidh-target/src/"
+
+    # CSIDH parameters
     p = 419
     m = 10
     Fp_1 = 409
@@ -19,31 +21,38 @@ class CSIDHBase:
     @property
     @abstractmethod
     def public(self):
+        """Public key."""
         pass
 
     @public.setter
     @abstractmethod
     def public(self, value: int):
+        """Public key setter."""
         pass
 
     @property
     @abstractmethod
     def private(self):
+        """Private key."""
         pass
 
     @private.setter
     @abstractmethod
     def private(self, value: List[int]):
+        """Private key setter."""
         pass
 
     @abstractmethod
     def build_target(self):
+        """Method for building the target on commandline."""
         pass
 
     def from_projective(self, value: int) -> int:
+        """Convert projective coordinates to affine coordinates."""
         return (value * pow(self.Fp_1, -1, self.p)) % self.p
 
     def to_projective(self, value: int) -> int:
+        """Convert affine coordinates to projective coordinates."""
         return (value * self.Fp_1) % self.p
 
 
@@ -73,12 +82,12 @@ class PrivateKey(Structure):
 
 
 class CSIDHDLL(CSIDHBase):
-    """Wrapper for CSIDH running locally on Linux"""
+    """Wrapper for CSIDH running locally as a dynamically linked library."""
 
     DLL = "./libcsidh.so"
 
-    def __init__(self, src_path="../../../src") -> None:
-        self.SRC_PATH = src_path
+    def __init__(self, src_path="") -> None:
+        self.SRC_PATH = src_path if src_path else self.SRC_PATH
         self.build_target()
         self.libcsidh = CDLL(self.DLL, mode=1)
 
@@ -146,40 +155,38 @@ class CSIDHDLL(CSIDHBase):
             NUM_PRIMES * MAX_EXPONENT,
             1,
         )
-        return result.A.c[0]
+        return self.from_projective(result.A.c[0])
 
 
 class CSIDHCW(CSIDHBase):
-    """Wrapper for CSIDH running on Chipwhisperer"""
+    """Wrapper for CSIDH running on ChipWhisperer."""
 
-
-
-
-    def __init__(self, src_path="../../../src", attack_type="A1", PLATFORM="CW308_STM32F3") -> None:
+    def __init__(self, src_path="", attack_type="A1", PLATFORM="CW308_STM32F3") -> None:
         self.SCOPETYPE = "OPENADC"
         self.PLATFORM = PLATFORM
         self.SS_VER = "SS_VER_2_1"
         self.CRYPTO_TARGET = "NONE"
         self.BIN = "main-" + self.PLATFORM + ".hex"
-        
+
         self.scope = None
         self.target = None
         self.programmer = None
-        self.src_path  = src_path
-        self.firmware_path = src_path + self.BIN
+        self.SRC_PATH = src_path if src_path else self.SRC_PATH
+        self.firmware_path = self.SRC_PATH + self.BIN
         self.attack_type = attack_type
-        self.name=None
+        self.name = None
 
     def __str__(self) -> str:
         return f"Public:  {self.public}\nPrivate: {self.private}"
-    
+
     def setup(self) -> None:
         self.connect()
         self.choose_programmer()
         time.sleep(0.05)
         self.scope.default_setup()
-    
+
     def connect(self) -> None:
+        """Connect to the ChipWhisperer target and scope."""
         try:
             if not self.scope.connectStatus:
                 self.scope.con()
@@ -197,22 +204,30 @@ class CSIDHCW(CSIDHBase):
             else:
                 self.target_type = cw.targets.SimpleSerial
         except:
-            self.SS_VER="SS_VER_1_1"
+            self.SS_VER = "SS_VER_1_1"
             self.target_type = cw.targets.SimpleSerial
 
         try:
             self.target = cw.target(self.scope, self.target_type)
         except:
-            print("INFO: Caught exception on reconnecting to target - attempting to reconnect to scope first.")
-            print("INFO: This is a work-around when USB has died without Python knowing. Ignore errors above this line.")
+            print(
+                "INFO: Caught exception on reconnecting to target - attempting to reconnect to scope first."
+            )
+            print(
+                "INFO: This is a work-around when USB has died without Python knowing. Ignore errors above this line."
+            )
             self.scope = cw.scope()
             self.target = cw.target(self.scope, self.target_type)
 
         print("INFO: Found ChipWhisperer😍")
 
-
     def choose_programmer(self) -> None:
-        if "STM" in self.PLATFORM or self.PLATFORM == "CWLITEARM" or self.PLATFORM == "CWNANO":
+        """Choose the programmer based on the platform."""
+        if (
+            "STM" in self.PLATFORM
+            or self.PLATFORM == "CWLITEARM"
+            or self.PLATFORM == "CWNANO"
+        ):
             self.programmer = cw.programmers.STM32FProgrammer
         elif self.PLATFORM == "CW303" or self.PLATFORM == "CWLITEXMEGA":
             self.programmer = cw.programmers.XMEGAProgrammer
@@ -223,22 +238,8 @@ class CSIDHCW(CSIDHBase):
         else:
             self.programmer = None
 
-    def setup_(self) -> None:
-        """Set up the scope, target, and programmer"""
-        self.scope.gain.db = 25
-        self.scope.adc.samples = 24000
-        self.scope.adc.offset = 0
-        self.scope.adc.decimate = 200
-        self.scope.adc.basic_mode = "rising_edge"
-        self.scope.adc.timeout = 5
-        self.scope.clock.clkgen_freq = 7370000
-        #self.scope.clock.adc_src = "clkgen_x4"
-        self.scope.trigger.triggers = "tio4"
-        self.scope.io.tio1 = "serial_rx"
-        self.scope.io.tio2 = "serial_tx"
-        # self.scope.io.hs2 = "clkgen"
-
     def voltage_glitching_setup(self) -> None:
+        """Setup for voltage glitching."""
         if self.scope._is_husky:
             self.scope.glitch.enabled = True
             self.scope.glitch.clk_src = "pll"
@@ -247,9 +248,11 @@ class CSIDHCW(CSIDHBase):
             self.scope.io.glitch_lp = False
             self.scope.io.glitch_lp = False
         else:
-            self.scope.glitch.clk_src = "clkgen" # set glitch input clock
-        self.scope.glitch.output = "glitch_only" # glitch_out = clk ^ glitch
-        self.scope.glitch.trigger_src = "ext_single" # glitch only after scope.arm() called
+            self.scope.glitch.clk_src = "clkgen"  # set glitch input clock
+        self.scope.glitch.output = "glitch_only"  # glitch_out = clk ^ glitch
+        self.scope.glitch.trigger_src = (
+            "ext_single"  # glitch only after scope.arm() called
+        )
         if self.PLATFORM == "CWLITEXMEGA":
             self.scope.io.glitch_lp = True
             self.scope.io.glitch_hp = True
@@ -261,8 +264,8 @@ class CSIDHCW(CSIDHBase):
             self.scope.io.glitch_lp = True
 
     def build_target(self) -> None:
-        """Builds the target using make"""
-        os.chdir(self.src_path)
+        """Build the target firmware."""
+        os.chdir(self.SRC_PATH)
         os.system(
             f"make clean PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.attack_type}"
         )
@@ -271,53 +274,53 @@ class CSIDHCW(CSIDHBase):
         )
 
     def program_target(self) -> None:
+        """Program the target with the firmware."""
         cw.program_target(self.scope, self.programmer, self.firmware_path)
         if self.SS_VER == "SS_VER_2_1":
             self.target.reset_comms()
 
-    def reset_target(self)-> None:
+    def reset_target(self) -> None:
+        """Reset the target device."""
         if self.PLATFORM == "CW303" or self.PLATFORM == "CWLITEXMEGA":
-            self.scope.io.pdic = 'low'
+            self.scope.io.pdic = "low"
             time.sleep(0.1)
-            self.scope.io.pdic = 'high_z' #XMEGA doesn't like pdic driven high
-            time.sleep(0.1) #xmega needs more startup time
+            self.scope.io.pdic = "high_z"  # XMEGA doesn't like pdic driven high
+            time.sleep(0.1)  # xmega needs more startup time
         elif "neorv32" in self.PLATFORM.lower():
-            raise IOError("Default iCE40 neorv32 build does not have external reset - reprogram device to reset")
+            raise IOError(
+                "Default iCE40 neorv32 build does not have external reset - reprogram device to reset"
+            )
         elif self.PLATFORM == "CW308_SAM4S" or self.PLATFORM == "CWHUSKY":
-            self.scope.io.nrst = 'low'
+            self.scope.io.nrst = "low"
             time.sleep(0.25)
-            self.scope.io.nrst = 'high_z'
+            self.scope.io.nrst = "high_z"
             time.sleep(0.25)
-        else:  
-            self.scope.io.nrst = 'low'
+        else:
+            self.scope.io.nrst = "low"
             time.sleep(0.05)
-            self.scope.io.nrst = 'high_z'
+            self.scope.io.nrst = "high_z"
             time.sleep(0.05)
-        self.target.flush()
-
-    def reset_target_(self) -> None:
-        self.scope.io.nrst = "low"
-        time.sleep(0.05)
-        self.scope.io.nrst = "high"
-        time.sleep(0.05)
         self.target.flush()
 
     def flash_target(self) -> None:
+        """Build, program, and reset the target."""
         self.build_target()
         self.program_target()
         self.reset_target()
 
     @property
-    def public_with_errors(self):
+    def public_with_errors(self, timeout=100, glitch_timeout=1):
+        """Read the public key without error checking."""
         self.target.flush()
         self.target.send_cmd("2", 0, bytearray([]))
-        value = self.target.simpleserial_read_witherrors(timeout=100, glitch_timeout=1)
-        logging.info(f"CSIDH:public: {value=}")
+        value = self.target.simpleserial_read_witherrors(
+            timeout=timeout, glitch_timeout=glitch_timeout
+        )
         if not value["valid"]:
             return value
         value = int.from_bytes(value["payload"], "little")
         self.target.flush()
-        return (value * pow(409, -1, 419)) % 419
+        return self.from_projective(value)
 
     @property
     def public(self):
@@ -326,7 +329,7 @@ class CSIDHCW(CSIDHBase):
         value = self.target.simpleserial_read(timeout=10)
         value = int.from_bytes(value, "little")
         self.target.flush()
-        return (value * pow(409, -1, 419)) % 419
+        return self.from_projective(value)
 
     @public.setter
     def public(self, value: int):
@@ -378,4 +381,8 @@ if __name__ == "__main__":
         print(csidh.private)
     elif argv[1] == "DLL":
         csidh = CSIDHDLL()
-        print(csidh.csidh(0, [-10, 10, -10]))
+        csidh.public = 0xEC
+        csidh.private = [10, -10, 10]
+        print(f"{csidh.public=}")
+        print(f"{csidh.private=}")
+        print(f"{csidh.action()=}")
