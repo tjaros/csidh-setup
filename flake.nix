@@ -14,13 +14,14 @@
           # load external libraries that you need in your rust project here
           hidapi
           libusb1
-          stdenv.cc.cc
+          stdenv.cc.cc.lib
         ];
       pkgs = nixpkgs.legacyPackages.${system};
       python = pkgs.python311.withPackages (ps:
         with ps; [
           virtualenv
           pip
+	        notebook
         ]);
     in {
       devShells.default = pkgs.mkShell {
@@ -30,7 +31,8 @@
           gcc-arm-embedded-9
           cmake
           sage
-          packer
+	        ripgrep
+	        texliveFull
         ];
 
         shellHook = ''
