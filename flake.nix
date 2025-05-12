@@ -11,7 +11,6 @@
     flake-utils.lib.eachDefaultSystem (system: let
       libPath = with pkgs;
         lib.makeLibraryPath [
-          # load external libraries that you need in your rust project here
           hidapi
           libusb1
           stdenv.cc.cc.lib
@@ -21,7 +20,7 @@
         with ps; [
           virtualenv
           pip
-	        notebook
+          notebook
         ]);
     in {
       devShells.default = pkgs.mkShell {
@@ -31,8 +30,8 @@
           gcc-arm-embedded-9
           cmake
           sage
-	        ripgrep
-	        texliveFull
+          ripgrep
+          texliveFull
         ];
 
         shellHook = ''
@@ -42,6 +41,21 @@
           export PYTHONPATH="$PIP_PREFIX/${python.sitePackages}:$PYTHONPATH"
           export PATH="${python}/bin:$PIP_PREFIX/bin:$PATH"
           unset SOURCE_DATE_EPOCH
+
+          # Patch the chipwhisperer module
+          # Apply the chipwhisperer patch if not already applied
+          if [ -d ./chipwhisperer ] && [ -f ./patches/chipwhisperer.patch ]; then
+            cd chipwhisperer
+            if git apply --check ../patches/chipwhisperer.patch > /dev/null 2>&1; then
+              echo "Applying chipwhisperer patch..."
+              git apply ../patches/chipwhisperer.patch
+            else
+              echo "Chipwhisperer patch already applied or cannot be applied cleanly."
+            fi
+            cd ..
+          else
+            echo "Chipwhisperer directory or patch file not found!"
+          fi
         '';
 
         LD_LIBRARY_PATH = libPath;
