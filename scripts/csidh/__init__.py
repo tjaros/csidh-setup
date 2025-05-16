@@ -1,1 +1,1 @@
-from .wrapper.csidh import CSIDHCW, CSIDHDLL
+from .wrapper import CSIDHCW, CSIDHDLL

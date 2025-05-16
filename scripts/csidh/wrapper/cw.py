@@ -3,159 +3,12 @@ import struct
 from typing import List, Optional
 from abc import abstractmethod
 import chipwhisperer as cw
+from .base import  CSIDHBase
 from ctypes import *
 
 import time
 
 
-class CSIDHBase:
-    """Base class for CSIDH wrappers."""
-
-    SRC_PATH = "../../../csidh-target/src/"
-
-    # CSIDH parameters
-    p = 419
-    m = 10
-    Fp_1 = 409
-
-    @property
-    @abstractmethod
-    def public(self):
-        """Public key."""
-        pass
-
-    @public.setter
-    @abstractmethod
-    def public(self, value: int):
-        """Public key setter."""
-        pass
-
-    @property
-    @abstractmethod
-    def private(self):
-        """Private key."""
-        pass
-
-    @private.setter
-    @abstractmethod
-    def private(self, value: List[int]):
-        """Private key setter."""
-        pass
-
-    @abstractmethod
-    def build_target(self):
-        """Method for building the target on commandline."""
-        pass
-
-    def from_projective(self, value: int) -> int:
-        """Convert projective coordinates to affine coordinates."""
-        return (value * pow(self.Fp_1, -1, self.p)) % self.p
-
-    def to_projective(self, value: int) -> int:
-        """Convert affine coordinates to projective coordinates."""
-        return (value * self.Fp_1) % self.p
-
-
-NUM_PRIMES = 3
-MAX_EXPONENT = 10
-LIMBS = 1
-
-
-class UIntC(Structure):
-    _fields_ = [("c", c_longlong * LIMBS)]
-
-
-class Fp(Structure):
-    _fields_ = [("c", c_longlong * LIMBS)]
-
-
-class Proj(Structure):
-    _fields_ = [("x", Fp), ("z", Fp)]
-
-
-class PublicKey(Structure):
-    _fields_ = [("A", Fp)]
-
-
-class PrivateKey(Structure):
-    _fields_ = [("e", c_ubyte * NUM_PRIMES)]
-
-
-class CSIDHDLL(CSIDHBase):
-    """Wrapper for CSIDH running locally as a dynamically linked library."""
-
-    DLL = "./libcsidh.so"
-
-    def __init__(self, src_path="") -> None:
-        self.SRC_PATH = src_path if src_path else self.SRC_PATH
-        self.build_target()
-        self.libcsidh = CDLL(self.DLL, mode=1)
-
-        self._public = PublicKey()
-        self._private = PrivateKey()
-
-    def build_target(self):
-        os.chdir(self.SRC_PATH)
-        os.system("cmake -B build -S .")
-        os.chdir("build")
-        os.system("make")
-
-    @property
-    def public(self):
-        return self._public.A.c[0]
-
-    @public.setter
-    def public(self, value: int):
-        self._public.A.c[0] = value
-
-    @property
-    def private(self):
-        return list(self._private.e)
-
-    @private.setter
-    def private(self, value: List[int]):
-        for i in range(NUM_PRIMES):
-            self._private.e[i] = -value[i]
-
-    def action(self) -> int:
-        """CSIDH Function
-
-        :return bool: Success or error
-        :param out: Public key
-        :param in: Private key
-        :param num_intervals: Always 1
-        :param max_exponent: NUM_PRIMES * [MAX_EXPONENT]
-        :param num_isogenies: NUM_PRIMES * MAX_EXPONENT
-        :param my: Always 1
-        """
-        csidh = self.libcsidh.csidh
-        csidh.argtypes = [
-            POINTER(PublicKey),  # out
-            POINTER(PublicKey),  # in
-            POINTER(PrivateKey),  # priv
-            c_ubyte,
-            POINTER(NUM_PRIMES * c_byte),
-            c_uint,
-            c_ubyte,
-        ]
-        csidh.restype = c_bool
-
-        result = PublicKey()
-
-        max_exponent = (c_byte * NUM_PRIMES)()
-        for i in range(NUM_PRIMES):
-            max_exponent[i] = MAX_EXPONENT
-
-        csidh(
-            byref(result),
-            byref(self._public),
-            byref(self._private),
-            1,
-            byref(max_exponent),
-            NUM_PRIMES * MAX_EXPONENT,
-            1,
-        )
-        return self.from_projective(result.A.c[0])
 
 
 class CSIDHCW(CSIDHBase):
@@ -175,6 +28,7 @@ class CSIDHCW(CSIDHBase):
         self.firmware_path = self.SRC_PATH + self.BIN
         self.attack_type = attack_type
         self.name = None
+        self.action_sleep = 0.5
 
     def __str__(self) -> str:
         return f"Public:  {self.public}\nPrivate: {self.private}"
@@ -326,7 +180,7 @@ class CSIDHCW(CSIDHBase):
     def public(self):
         self.target.flush()
         self.target.send_cmd("2", 0, bytearray([]))
-        value = self.target.simpleserial_read(timeout=10)
+        value = self.target.simpleserial_read('r', timeout=3000)
         value = int.from_bytes(value, "little")
         self.target.flush()
         return self.from_projective(value)
@@ -343,7 +197,7 @@ class CSIDHCW(CSIDHBase):
         self.target.flush()
         self.target.send_cmd("4", 0, bytearray([]))
         time.sleep(0.1)
-        value = self.target.simpleserial_read()
+        value = self.target.simpleserial_read('r', timeout=3000)
         self.target.flush()
         time.sleep(0.1)
         return list([-struct.unpack("b", bytearray([x]))[0] for x in value])
@@ -360,29 +214,8 @@ class CSIDHCW(CSIDHBase):
 
     def action(self) -> int:
         self.target.send_cmd("5", 0, bytearray([]))
-        time.sleep(0.4)
+        time.sleep(self.action_sleep)
 
     def dis(self) -> None:
         self.target.dis()
         self.scope.dis()
-
-
-if __name__ == "__main__":
-    import sys
-
-    argv = sys.argv
-    if len(argv) < 2:
-        print("USAGE: {argv[0]} CW|DLL")
-        sys.exit(1)
-    if argv[1] == "CW":
-        csidh = CSIDHCW()
-        csidh.action()
-        print(csidh.public)
-        print(csidh.private)
-    elif argv[1] == "DLL":
-        csidh = CSIDHDLL()
-        csidh.public = 0xEC
-        csidh.private = [10, -10, 10]
-        print(f"{csidh.public=}")
-        print(f"{csidh.private=}")
-        print(f"{csidh.action()=}")
