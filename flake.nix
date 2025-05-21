@@ -1,5 +1,5 @@
 {
-  description = "Python development shell 3.10";
+  description = "Development shell for my Chipwhisperer shenanigans";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
@@ -30,8 +30,10 @@
           gcc-arm-embedded-9
           cmake
           sage
+	  gcc
           ripgrep
           texliveFull
+	  helix
         ];
 
         shellHook = ''
