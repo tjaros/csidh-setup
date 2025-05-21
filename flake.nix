@@ -58,6 +58,16 @@
           else
             echo "Chipwhisperer directory or patch file not found!"
           fi
+
+         # Install our version of Chipwhisperer
+	 cd chipwhisperer
+         pip install -r jupyter/requirements.txt
+         pip install .
+	 cd ..
+
+	 # Install our utility scripts
+	 cd csidh-tools
+	 pip install .
         '';
 
         LD_LIBRARY_PATH = libPath;
