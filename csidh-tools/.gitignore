@@ -1,0 +1,6 @@
+*
+!*.py
+!MANIFEST.in
+!pyproject.toml
+!README.md
+!.gitignore

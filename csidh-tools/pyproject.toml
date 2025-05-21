@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 packages = ["csidh"]
 
 [project]
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
 name = "csidh"
 description = "Utilities for glitching on Chipwhisperer, and subsequent analysis of results."
 requires-python = ">= 3.11"

@@ -3,5 +3,6 @@ include requirements*
 recursive-include csidh *
 
 recursive-exclude * __pycache__
+recursive-exclude * .ipynb_checkpoints
 recursive-exclude * *.py[co]
 recursive-exclude .github*
