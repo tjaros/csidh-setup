@@ -67,7 +67,8 @@
 
 	 # Install our utility scripts
 	 cd csidh-tools
-	 pip install .
+	 pip install -e .
+         cd ..
         '';
 
         LD_LIBRARY_PATH = libPath;
