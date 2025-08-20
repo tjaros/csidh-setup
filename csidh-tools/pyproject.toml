@@ -3,11 +3,11 @@ requires = ["setuptools >= 61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["csidhcw"]
+packages = ["csidhtools"]
 
 [project]
 dynamic = ["dependencies", "version"]
-name = "csidhcw"
+name = "csidhtools"
 description = "Utilities for glitching CSIDH on Chipwhisperer, and subsequent analysis of results."
 requires-python = ">= 3.11"
 authors = [{ name = "tjaros" }]
