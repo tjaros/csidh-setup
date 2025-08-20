@@ -20,6 +20,7 @@ class CSIDHCW(CSIDHBase):
         self.SS_VER = "SS_VER_2_1"
         self.CRYPTO_TARGET = "NONE"
         self.BIN = "main-" + self.PLATFORM + ".hex"
+        self.RNG = 'DETERMINISTIC'
 
         self.scope = None
         self.target = None
@@ -121,10 +122,10 @@ class CSIDHCW(CSIDHBase):
         """Build the target firmware."""
         os.chdir(self.SRC_PATH)
         os.system(
-            f"make clean PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.attack_type}"
+            f"make clean"
         )
         os.system(
-            f"make PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.attack_type}"
+            f"make PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.attack_type} RNG={self.RNG}"
         )
 
     def program_target(self) -> None:

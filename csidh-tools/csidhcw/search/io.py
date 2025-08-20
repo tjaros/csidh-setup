@@ -37,6 +37,16 @@ def read_cache_from_file(filename) -> OrderedDict:
         result.append(measurements[i])
     return result
 
+def to_unit(entry):
+    unit = Unit()
+    unit.ext_offset = entry["ext_offset"]
+    unit.offset = entry["offset"]
+    unit.width = entry["width"]
+    unit.repeat = entry["repeat"]
+    unit.measurements = entry["measurements"]
+    unit.responses = entry["responses"]
+    return unit
+
 def read_caches_into_dataframe(filenames: List[str]):
     df = None
     for filename in filenames:

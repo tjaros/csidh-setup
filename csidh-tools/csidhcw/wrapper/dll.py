@@ -9,9 +9,6 @@ from .base import CSIDHBase
 
 import time
 
-
-
-
 NUM_PRIMES = 3
 MAX_EXPONENT = 5
 LIMBS = 1
