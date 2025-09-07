@@ -28,13 +28,16 @@ def read_cache_from_file(filename) -> OrderedDict:
         data = json.load(f)
     result = []
     measurements = data["measurements"]
-    for i in range(len(measuremens)):
+    for i in range(len(measurements)):
         unit = Unit(repr=measurements[i]["unit"])
         unit.measurements = measurements[i]["measurements"]
         unit.responses = measurements[i]["responses"]
-        del measurements[i]["index"]
-        measurements[i]["unit"] = unit
-        result.append(measurements[i])
+
+        entry = {"unit":unit}
+        entry.update(unit.__dict__())
+        entry["measurements"] = unit.measurements
+        entry["responses"] = unit.responses
+        result.append(entry)
     return result
 
 def to_unit(entry):
@@ -52,5 +55,5 @@ def read_caches_into_dataframe(filenames: List[str]):
     for filename in filenames:
         result = pd.DataFrame(read_cache_from_file(filename))
         df = result if df is None else pd.concat([df, result], ignore_index=True, sort=False)
-    return False
+    return df
     

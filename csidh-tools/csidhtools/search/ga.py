@@ -12,7 +12,7 @@ from collections import OrderedDict
 import random
 
 P_MUT = 0.1
-PUBLIC_EXPECTED = 0
+PUBLIC_EXPECTED = 158
 
 cache = OrderedDict()
 
@@ -156,11 +156,16 @@ def selection_roulette(population, elite_size=1, mutate=mutate_unit):
 
 def evaluate_unit_default(csidh, unit, num_measurements=3):
     """Evaluates a single unit"""
-    if unit.is_husky:
+    
+    if csidh.scope._is_husky:
         csidh.scope.glitch.width = int(unit.width)
         csidh.scope.glitch.offset = int(unit.offset)
-        csidh.scope.glitch.repeat = int(unit.repeat)
-        csidh.scope.glitch.ext_offset = int(unit.ext_offset)
+        if csidh.scope.glitch.num_glitches > 1: 
+            csidh.scope.glitch.repeat = unit.repeat
+            csidh.scope.glitch.ext_offset = unit.ext_offset
+        else:
+            csidh.scope.glitch.repeat = int(unit.repeat)
+            csidh.scope.glitch.ext_offset = int(unit.ext_offset)
     else:
         csidh.scope.glitch.width = unit.width
         csidh.scope.glitch.offset = unit.offset
@@ -173,6 +178,10 @@ def evaluate_unit_default(csidh, unit, num_measurements=3):
 
     for _ in range(num_measurements):
         csidh.reset_target()
+        if csidh.scope._is_husky:
+            # FSM has a bug where it gets stuck and double
+            # glitches don't work
+            csidh.scope.glitch.state = None
         csidh.scope.arm()
         ret = csidh.action()
         if ret:

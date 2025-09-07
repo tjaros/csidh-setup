@@ -112,3 +112,46 @@ class CSIDHDLL(CSIDHBase):
         )
         return result.A.c[0]
 
+    def isogeny_neighbors(self, public, i):
+        """
+        Compute the neighboring public keys of a given CSIDH public key
+        obtained by applying ±1 steps in the secret exponent at index `i`.
+
+        Parameters
+        ----------
+        public : list[int] or CSIDH public key
+            The public key (usually represented as a Montgomery curve coefficient).
+        i : int
+            Index of the prime where the step is applied.
+
+        Returns
+        -------
+        list
+            A list of two public keys:
+            [public_key_with_step_-1, public_key_with_step_+1].
+
+        Notes
+        -----
+        - The function keeps the original `public` fixed and evaluates
+          the effect of modifying only the `i`-th coordinate in the secret exponent vector.
+        - The results correspond to the two immediate neighbors of `public`
+          in the CSIDH isogeny graph along dimension `i`.
+        """
+        # Convert input public key to projective form
+        self.public = self.to_projective(public)
+
+        # Initialize private key vector
+        private = [0, 0, 0]
+
+        # Step -1
+        private[i] = -1
+        self.private = private
+        neighbor_minus = self.from_projective(self.action())
+
+        # Step +1
+        private[i] = 1
+        self.private = private
+        neighbor_plus = self.from_projective(self.action())
+
+        return [neighbor_minus, neighbor_plus]
+
