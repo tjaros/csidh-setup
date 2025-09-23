@@ -21,6 +21,7 @@ class CSIDHCW(CSIDHBase):
         self.CRYPTO_TARGET = "NONE"
         self.BIN = "main-" + self.PLATFORM + ".hex"
         self.RNG = 'DETERMINISTIC'
+        self.BENCH_MODE = 'NORMAL'
 
         self.scope = None
         self.target = None
@@ -125,7 +126,7 @@ class CSIDHCW(CSIDHBase):
             f"make clean"
         )
         os.system(
-            f"make PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.attack_type} RNG={self.RNG}"
+            f"make PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.attack_type} RNG={self.RNG} BENCH_MODE={self.BENCH_MODE}"
         )
 
     def program_target(self) -> None:
