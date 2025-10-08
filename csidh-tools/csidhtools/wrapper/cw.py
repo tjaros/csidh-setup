@@ -14,7 +14,7 @@ import time
 class CSIDHCW(CSIDHBase):
     """Wrapper for CSIDH running on ChipWhisperer."""
 
-    def __init__(self, src_path="", attack_type="A1", PLATFORM="CW308_STM32F3") -> None:
+    def __init__(self, SRC_PATH, PLATFORM="CW308_STM32F3") -> None:
         self.SCOPETYPE = "OPENADC"
         self.PLATFORM = PLATFORM
         self.SS_VER = "SS_VER_2_1"
@@ -22,15 +22,22 @@ class CSIDHCW(CSIDHBase):
         self.BIN = "main-" + self.PLATFORM + ".hex"
         self.RNG = 'DETERMINISTIC'
         self.BENCH_MODE = 'NORMAL'
-
+        self.OPT='s'
+        self.SRC_PATH = SRC_PATH
+        self.ATTACK_TYPE="A1"
+        
+        self.firmware_path = self.SRC_PATH + self.BIN
         self.scope = None
         self.target = None
         self.programmer = None
-        self.SRC_PATH = src_path if src_path else self.SRC_PATH
-        self.firmware_path = self.SRC_PATH + self.BIN
-        self.attack_type = attack_type
         self.name = None
-        self.action_sleep = 0.5
+        self.wait_ack = False
+
+    def __exit__(self):
+        print("Closing connection")
+        self.dis()
+
+
 
     def __str__(self) -> str:
         return f"Public:  {self.public}\nPrivate: {self.private}"
@@ -98,7 +105,6 @@ class CSIDHCW(CSIDHBase):
         """Setup for voltage glitching."""
         if self.scope._is_husky:
             self.scope.glitch.enabled = True
-            self.scope.glitch.clk_src = "pll"
             self.scope.io.glitch_hp = False
             self.scope.io.glitch_hp = True
             self.scope.io.glitch_lp = False
@@ -126,7 +132,7 @@ class CSIDHCW(CSIDHBase):
             f"make clean"
         )
         os.system(
-            f"make PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.attack_type} RNG={self.RNG} BENCH_MODE={self.BENCH_MODE}"
+            f"make PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.ATTACK_TYPE} RNG={self.RNG} BENCH_MODE={self.BENCH_MODE} OTP={self.OPT}"
         )
 
     def program_target(self) -> None:
@@ -214,9 +220,13 @@ class CSIDHCW(CSIDHBase):
         self.target.send_cmd("3", 0, priv)
         time.sleep(0.1)
 
-    def action(self) -> int:
+    def action(self) -> Optional[int]:
         self.target.send_cmd("5", 0, bytearray([]))
-        time.sleep(self.action_sleep)
+        ret = None
+        if self.wait_ack:
+            return self.target.simpleserial_wait_ack()
+        return None
+
 
     def dis(self) -> None:
         self.target.dis()
