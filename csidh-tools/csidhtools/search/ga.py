@@ -10,12 +10,10 @@ import logging
 import numpy as np
 from collections import OrderedDict
 import random
+import time
 
 P_MUT = 0.1
-PUBLIC_EXPECTED = 158
-
-cache = OrderedDict()
-
+PUBLIC_EXPECTED = None
 
 def generate_population(N):
     return [Unit() for i in range(N)]
@@ -154,7 +152,7 @@ def selection_roulette(population, elite_size=1, mutate=mutate_unit):
     return newpop
 
 
-def evaluate_unit_default(csidh, unit, num_measurements=3):
+def evaluate_unit_default(csidh, unit, cache, num_measurements=3):
     """Evaluates a single unit"""
     
     if csidh.scope._is_husky:
@@ -175,6 +173,10 @@ def evaluate_unit_default(csidh, unit, num_measurements=3):
     # Perform the measurements
     measurements = []
     responses = []
+    timing = []
+
+    if not csidh.wait_ack:
+        csidh.wait_ack = True
 
     for _ in range(num_measurements):
         csidh.reset_target()
@@ -183,7 +185,9 @@ def evaluate_unit_default(csidh, unit, num_measurements=3):
             # glitches don't work
             csidh.scope.glitch.state = None
         csidh.scope.arm()
+        t0 = time.time()
         ret = csidh.action()
+        timing.append(time.time() - t0)
         if ret:
             logging.error("Timeout happened during acquisition")
 
@@ -192,6 +196,7 @@ def evaluate_unit_default(csidh, unit, num_measurements=3):
             measurements.append("RESET")
         elif public_received == PUBLIC_EXPECTED:
             measurements.append("NORMAL")
+            responses.append(public_received)
         else:
             measurements.append("JUSTRIGHT")
             responses.append(public_received)
@@ -201,9 +206,11 @@ def evaluate_unit_default(csidh, unit, num_measurements=3):
     unit.repeat = csidh.scope.glitch.repeat
     unit.measurements = measurements
     unit.responses = responses
+    unit.timing = timing
     print(unit)
     print(unit.measurements)
     print(unit.responses)
+    print(unit.timing)
 
     # Classify
     if not all(m == measurements[0] for m in measurements):
@@ -225,7 +232,7 @@ def evaluate_unit_default(csidh, unit, num_measurements=3):
     cache[unit] = unit.fitness
 
 
-def evaluate_batch(csidh, population, evaluate_unit=evaluate_unit_default):
+def evaluate_batch(csidh, population, cache, evaluate_unit=evaluate_unit_default):
 
     uncached = [u for u in population if u not in cache]
     if not uncached:
@@ -238,6 +245,6 @@ def evaluate_batch(csidh, population, evaluate_unit=evaluate_unit_default):
             unit.fitness = cache[unit]
 
     for unit in to_visit:
-        evaluate_unit(csidh, unit)
+        evaluate_unit(csidh, unit, cache)
 
     return [u.fitness for u in population]

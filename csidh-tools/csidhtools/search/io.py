@@ -16,6 +16,7 @@ def write_cache_to_file(filename: str, cache: OrderedDict):
         entry["unit"] = repr(unit)
         entry["responses"] = unit.responses
         entry["measurements"] = unit.measurements
+        entry["timing"] = unit.timing
         measurements.append(entry)
     result["measurements"] = measurements
 
@@ -29,9 +30,10 @@ def read_cache_from_file(filename) -> OrderedDict:
     result = []
     measurements = data["measurements"]
     for i in range(len(measurements)):
-        unit = Unit(repr=measurements[i]["unit"])
+        unit = Unit(repr=measurements[i]["unit"], parser=True)
         unit.measurements = measurements[i]["measurements"]
         unit.responses = measurements[i]["responses"]
+        unit.responses = measurements[i].get('timing', [])
 
         entry = {"unit":unit}
         entry.update(unit.__dict__())
@@ -48,6 +50,7 @@ def to_unit(entry):
     unit.repeat = entry["repeat"]
     unit.measurements = entry["measurements"]
     unit.responses = entry["responses"]
+    unit.timing = entry["timing"]
     return unit
 
 def read_caches_into_dataframe(filenames: List[str]):

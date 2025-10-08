@@ -43,6 +43,7 @@ class Unit:
     def __init__(self, repr=None, parser=None, num_glitches=1):
         self.measurements = []
         self.responses = []
+        self.timing = []
         self.offset_fine = None
         self.width_fine = None
         self.ext_offset = None
@@ -147,12 +148,21 @@ class Unit:
 
 
     def __str__(self):
+        if self.ext_offset and not isinstance(self.ext_offset, int):
+            self.ext_offset = list(self.ext_offset)
+        if self.repeat and not isinstance(self.repeat, int):
+            self.repeat = list(self.repeat)
         result =  f"(ext_offset={self.ext_offset}, offset={self.offset}, width={self.width}, repeat={self.repeat}, type={self.type}, fitness={self.fitness}"
         if not self.is_husky:
             result += f" offset_fine={self.offset_fine}, width_fine={self.width_fine}"
         return result + ")"
 
     def __repr__(self):
+        if self.ext_offset and not isinstance(self.ext_offset, int):
+            self.ext_offset = list(self.ext_offset)
+        if self.repeat and not isinstance(self.repeat, int):
+            self.repeat = list(self.repeat)
+
         result = "{},{:f},{:f},{},{},{}".format(
             self.ext_offset,
             self.offset,
