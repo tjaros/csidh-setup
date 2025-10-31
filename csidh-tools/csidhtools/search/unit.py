@@ -163,19 +163,9 @@ class Unit:
         if self.repeat and not isinstance(self.repeat, int):
             self.repeat = list(self.repeat)
 
-        result = "{},{:f},{:f},{},{},{}".format(
-            self.ext_offset,
-            self.offset,
-            self.width,
-            self.repeat,
-            self.type,
-            self.fitness
-        )
+        result = f"{self.ext_offset},{self.offset},{self.width},{self.repeat},{self.type},{self.fitness}"
         if not self.is_husky:
-            result += ",{:d},{:d}".format(
-                self.offset_fine,
-                self.width_fine,
-            )
+            result += f",{self.offset_fine},{self.width_fine}"
         return result
 
     def __lt__(self, other):
