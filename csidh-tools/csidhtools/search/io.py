@@ -33,12 +33,13 @@ def read_cache_from_file(filename) -> OrderedDict:
         unit = Unit(repr=measurements[i]["unit"], parser=True)
         unit.measurements = measurements[i]["measurements"]
         unit.responses = measurements[i]["responses"]
-        unit.responses = measurements[i].get('timing', [])
+        unit.timing = measurements[i].get('timing', [])
 
         entry = {"unit":unit}
         entry.update(unit.__dict__())
         entry["measurements"] = unit.measurements
         entry["responses"] = unit.responses
+        entry["timing"] = unit.timing
         result.append(entry)
     return result
 
