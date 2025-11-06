@@ -1,4 +1,5 @@
 import os
+import sys
 import struct
 from typing import List, Optional
 from abc import abstractmethod
@@ -32,6 +33,7 @@ class CSIDHCW(CSIDHBase):
         self.programmer = None
         self.name = None
         self.wait_ack = False
+        self.ack_timeout = 500
 
     def __exit__(self):
         print("Closing connection")
@@ -220,11 +222,21 @@ class CSIDHCW(CSIDHBase):
         self.target.send_cmd("3", 0, priv)
         time.sleep(0.1)
 
+    def simpleserial_wait_ack(self, timeout):
+        data = self.target.read(4, timeout = timeout)
+        if len(data) < 2:
+            print("Target did not ack", file=sys.stderr)
+            return None
+        if data[1] != 'e':
+            print(f"Ack error: {repr(data)}", file=sys.stderr)
+            return None
+        return data
+
     def action(self) -> Optional[int]:
         self.target.send_cmd("5", 0, bytearray([]))
         ret = None
         if self.wait_ack:
-            return self.target.simpleserial_wait_ack()
+            return self.simpleserial_wait_ack(self.ack_timeout)
         return None
 
 

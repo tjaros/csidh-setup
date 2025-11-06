@@ -188,7 +188,7 @@ def evaluate_unit_default(csidh, unit, cache, num_measurements=3):
         t0 = time.time()
         ret = csidh.action()
         timing.append(time.time() - t0)
-        if ret:
+        if ret is None:
             logging.error("Timeout happened during acquisition")
 
         public_received = csidh.public_with_errors
