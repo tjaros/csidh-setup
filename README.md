@@ -1,58 +1,119 @@
-# Setup
+# CSIDH Setup
 
-This repository contains a guide to setting up the FI setup on CW and CW-Husky.
+This repository contains a development environment for CSIDH implementation with ChipWhisperer support using Nix.
 
-Python version: `3.10<=`.
-Chipwhisperer version: `5.7.0`
+## Prerequisites
 
-## Downloading this repository
+### Install Nix
 
-First we clone this repository and initialize the submodules.
+Install Nix via the recommended multi-user installation:
+
+```bash
+sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
+```
+
+For more installation options, see the [official Nix installation guide](https://nixos.org/download/#nix-install-linux).
+
+## Setup
+
+### Clone the repository
 
 ```bash
 git clone -j8 https://github.com/tjaros/csidh-setup.git --recurse-submodules
 ```
 
-## Installing Chipwhisperer
-
-This part was taken from [Chipwhisperer Quick installation instructions](https://chipwhisperer.readthedocs.io/en/latest/linux-install.html). Assuming you have Debian/Ubuntu based distribution with `apt-get` and `apt`.
-
 ```bash
-sudo apt update && sudo apt upgrade
-
-# python prereqs
-sudo apt-get install build-essential gdb lcov pkg-config \
-    libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
-    libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev \
-    lzma lzma-dev tk-dev uuid-dev zlib1g-dev curl
-
-sudo apt install libusb-dev make git avr-libc gcc-avr \
-    gcc-arm-none-eabi libusb-1.0-0-dev usbutils
-
-# Virtual environment setup
-# install pyenv - skip if already done
-    curl https://pyenv.run | bash
-    echo 'export PATH="~/.pyenv/bin:$PATH"' >> ~/.bashrc
-    echo 'export PATH="~/.pyenv/shims:$PATH"' >> ~/.bashrc
-    echo 'eval "$(pyenv init -)"' >> ~/.bashrc
-    echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc
-
-source ~/.bashrc
-
-pyenv install 3.10.13
-pyenv virtualenv 3.10.13 cw
-pyenv activate cw
-
-cd csidh-setup/chipwhisperer
-sudo cp hardware/50-newae.rules /etc/udev/rules.d/50-newae.rules
-sudo udevadm control --reload-rules
-sudo groupadd -f chipwhisperer
-sudo usermod -aG chipwhisperer $USER
-sudo usermod -aG plugdev $USER
-
-# Alternatively you can try
-# pip install chipwhisperer
-python -m pip install -e .
+cd csidh-setup
 ```
 
-Docker image might be set up alternatively, though thats future work for now.
+### Install ChipWhisperer udev rules
+
+```bash
+sudo cp chipwhisperer/hardware/50-newae.rules /etc/udev/rules.d/50-newae.rules
+```
+
+```bash
+sudo udevadm control --reload-rules
+```
+
+```bash
+sudo groupadd -fr chipwhisperer
+```
+
+```bash
+sudo usermod -aG chipwhisperer $USER
+```
+
+```bash
+sudo usermod -aG plugdev $USER
+```
+
+**Reboot your system** for the udev rules to take effect.
+
+For more details on ChipWhisperer installation, see the [official ChipWhisperer Linux installation guide](https://chipwhisperer.readthedocs.io/en/latest/linux-install.html).
+
+### Set up CSIDH implementation
+
+Choose which CSIDH implementation you want to use by switching to the appropriate branch in the `csidh-target` submodule:
+
+```bash
+cd csidh-target
+```
+
+```bash
+git switch dummy
+```
+
+or
+
+```bash
+git switch dummy-free
+```
+
+```bash
+cd ..
+```
+
+### Create HAL symlink
+
+Create a symlink to the ChipWhisperer HAL directory:
+
+```bash
+ln -s ../chipwhisperer/hardware/victims/firmware/hal csidh-target/src/hal
+```
+
+### Enter the development environment
+
+```bash
+nix develop
+```
+
+This command will:
+- Install all necessary compilers (ARM GCC, AVR GCC, Clang)
+- Set up Python 3.11 with a virtual environment
+- Install ChipWhisperer and apply necessary patches
+- Install csidh-tools in editable mode
+- Configure all dependencies (cmake, sage, libusb, etc.)
+
+## Directory Structure
+
+```
+csidh-setup/
+├── chipwhisperer/          # ChipWhisperer submodule
+├── csidh-target/           # CSIDH implementation sources (from csidhfi)
+│   └── src/
+│       └── hal/            # Symlink to chipwhisperer/hardware/victims/firmware/hal/
+├── csidh-tools/            # CSIDH tools package
+├── patches/                # Patches for ChipWhisperer
+│   └── chipwhisperer.patch
+├── flake.nix               # Nix development environment configuration
+└── README.md               # This file
+```
+
+## Working with Jupyter Notebooks
+
+To launch Jupyter Lab for interactive notebooks:
+
+```bash
+jupyter-lab
+```
