@@ -74,12 +74,12 @@ git switch dummy-free
 cd ..
 ```
 
-### Create HAL symlink
+### IMPORTANT: Create HAL symlink
 
-Create a symlink to the ChipWhisperer HAL directory:
+If it does not exist, create a symlink to the ChipWhisperer HAL directory:
 
 ```bash
-ln -s ../chipwhisperer/hardware/victims/firmware/hal csidh-target/src/hal
+ln -s ./chipwhisperer/hardware/victims/firmware/hal csidh-target/src/hal
 ```
 
 ### Enter the development environment

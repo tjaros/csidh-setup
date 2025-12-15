@@ -76,6 +76,12 @@
             echo "Which python: $(command -v python)"
             echo "Pip site-packages: $(python -c 'import sys, site; print(site.getsitepackages())')"
             echo "Venv ready. You're isolated from system/user packages."
+
+	    echo "Now please go to csidh-target and choose implementation branch"
+	    echo "Dummy:      git switch dummy"
+	    echo "Dummy-free: git switch dummy-free"
+
+	    echo "Please also make sure ./csidh-target/src/hal is symlinked to ./chipwhisperer/hardware/victims/firmware/hal"
           '';
         };
       });
