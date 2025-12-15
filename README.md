@@ -99,6 +99,8 @@ This command will:
 
 ```
 csidh-setup/
+├── notebooks/              # Contains Jupyter notebooks used for analysis
+│   └── data/               $ Contains collected data in JSON format 
 ├── chipwhisperer/          # ChipWhisperer submodule
 ├── csidh-target/           # CSIDH implementation sources (from csidhfi)
 │   └── src/
