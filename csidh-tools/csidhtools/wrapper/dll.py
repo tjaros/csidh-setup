@@ -13,6 +13,7 @@ NUM_PRIMES = 3
 MAX_EXPONENT = 5
 LIMBS = 1
 
+
 class UIntC(Structure):
     _fields_ = [("c", c_longlong * LIMBS)]
 
@@ -32,12 +33,11 @@ class PublicKey(Structure):
 class PrivateKey(Structure):
     _fields_ = [("e", c_ubyte * NUM_PRIMES)]
 
+
 class CSIDHDLL(CSIDHBase):
     """Wrapper for CSIDH running locally as a dynamically linked library."""
 
     DLL = "./libcsidh.so"
-    
-
 
     def __init__(self, src_path="") -> None:
         self.SRC_PATH = src_path if src_path else self.SRC_PATH
@@ -81,7 +81,6 @@ class CSIDHDLL(CSIDHBase):
         :param num_isogenies: NUM_PRIMES * MAX_EXPONENT
         :param my: Always 1
         """
-
 
         csidh = self.libcsidh.csidh
         csidh.argtypes = [
@@ -154,4 +153,3 @@ class CSIDHDLL(CSIDHBase):
         neighbor_plus = self.from_projective(self.action())
 
         return [neighbor_minus, neighbor_plus]
-

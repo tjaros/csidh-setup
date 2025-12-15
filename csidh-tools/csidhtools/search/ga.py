@@ -15,6 +15,7 @@ import time
 P_MUT = 0.1
 PUBLIC_EXPECTED = None
 
+
 def generate_population(N):
     return [Unit() for i in range(N)]
 
@@ -154,11 +155,11 @@ def selection_roulette(population, elite_size=1, mutate=mutate_unit):
 
 def evaluate_unit_default(csidh, unit, cache, num_measurements=3):
     """Evaluates a single unit"""
-    
+
     if csidh.scope._is_husky:
         csidh.scope.glitch.width = int(unit.width)
         csidh.scope.glitch.offset = int(unit.offset)
-        if csidh.scope.glitch.num_glitches > 1: 
+        if csidh.scope.glitch.num_glitches > 1:
             csidh.scope.glitch.repeat = unit.repeat
             csidh.scope.glitch.ext_offset = unit.ext_offset
         else:

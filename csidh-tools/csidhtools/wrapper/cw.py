@@ -4,12 +4,10 @@ import struct
 from typing import List, Optional
 from abc import abstractmethod
 import chipwhisperer as cw
-from .base import  CSIDHBase
+from .base import CSIDHBase
 from ctypes import *
 
 import time
-
-
 
 
 class CSIDHCW(CSIDHBase):
@@ -21,12 +19,12 @@ class CSIDHCW(CSIDHBase):
         self.SS_VER = "SS_VER_2_1"
         self.CRYPTO_TARGET = "NONE"
         self.BIN = "main-" + self.PLATFORM + ".hex"
-        self.RNG = 'DETERMINISTIC'
-        self.BENCH_MODE = 'NORMAL'
-        self.OPT='s'
+        self.RNG = "DETERMINISTIC"
+        self.BENCH_MODE = "NORMAL"
+        self.OPT = "s"
         self.SRC_PATH = SRC_PATH
-        self.ATTACK_TYPE="A1"
-        
+        self.ATTACK_TYPE = "A1"
+
         self.firmware_path = self.SRC_PATH + self.BIN
         self.scope = None
         self.target = None
@@ -38,8 +36,6 @@ class CSIDHCW(CSIDHBase):
     def __exit__(self):
         print("Closing connection")
         self.dis()
-
-
 
     def __str__(self) -> str:
         return f"Public:  {self.public}\nPrivate: {self.private}"
@@ -130,9 +126,7 @@ class CSIDHCW(CSIDHBase):
     def build_target(self) -> None:
         """Build the target firmware."""
         os.chdir(self.SRC_PATH)
-        os.system(
-            f"make clean"
-        )
+        os.system(f"make clean")
         os.system(
             f"make PLATFORM={self.PLATFORM} CRYPTO_TARGET={self.CRYPTO_TARGET} SS_VER={self.SS_VER} ATTACK_TYPE={self.ATTACK_TYPE} RNG={self.RNG} BENCH_MODE={self.BENCH_MODE} OTP={self.OPT}"
         )
@@ -190,7 +184,7 @@ class CSIDHCW(CSIDHBase):
     def public(self):
         self.target.flush()
         self.target.send_cmd("2", 0, bytearray([]))
-        value = self.target.simpleserial_read('r', timeout=3000)
+        value = self.target.simpleserial_read("r", timeout=3000)
         value = int.from_bytes(value, "little")
         self.target.flush()
         return self.from_projective(value)
@@ -207,7 +201,7 @@ class CSIDHCW(CSIDHBase):
         self.target.flush()
         self.target.send_cmd("4", 0, bytearray([]))
         time.sleep(0.1)
-        value = self.target.simpleserial_read('r', timeout=3000)
+        value = self.target.simpleserial_read("r", timeout=3000)
         self.target.flush()
         time.sleep(0.1)
         return list([-struct.unpack("b", bytearray([x]))[0] for x in value])
@@ -223,11 +217,11 @@ class CSIDHCW(CSIDHBase):
         time.sleep(0.1)
 
     def simpleserial_wait_ack(self, timeout):
-        data = self.target.read(4, timeout = timeout)
+        data = self.target.read(4, timeout=timeout)
         if len(data) < 2:
             print("Target did not ack", file=sys.stderr)
             return None
-        if data[1] != 'e':
+        if data[1] != "e":
             print(f"Ack error: {repr(data)}", file=sys.stderr)
             return None
         return data
@@ -238,7 +232,6 @@ class CSIDHCW(CSIDHBase):
         if self.wait_ack:
             return self.simpleserial_wait_ack(self.ack_timeout)
         return None
-
 
     def dis(self) -> None:
         self.target.dis()

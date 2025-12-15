@@ -14,6 +14,7 @@ def integer_to_uint64_array(value):
 
     return uint64_array
 
+
 def uint64_array_to_integer(uint64_array):
     if not uint64_array:
         raise ValueError("Input array must not be empty")

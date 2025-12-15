@@ -7,7 +7,6 @@ import pandas as pd
 import seaborn as sns
 
 
-
 def write_cache_to_file(filename: str, cache: OrderedDict):
     result = {}
     measurements = []
@@ -33,15 +32,16 @@ def read_cache_from_file(filename) -> OrderedDict:
         unit = Unit(repr=measurements[i]["unit"], parser=True)
         unit.measurements = measurements[i]["measurements"]
         unit.responses = measurements[i]["responses"]
-        unit.timing = measurements[i].get('timing', [])
+        unit.timing = measurements[i].get("timing", [])
 
-        entry = {"unit":unit}
+        entry = {"unit": unit}
         entry.update(unit.__dict__())
         entry["measurements"] = unit.measurements
         entry["responses"] = unit.responses
         entry["timing"] = unit.timing
         result.append(entry)
     return result
+
 
 def to_unit(entry):
     unit = Unit()
@@ -54,10 +54,14 @@ def to_unit(entry):
     unit.timing = entry["timing"]
     return unit
 
+
 def read_caches_into_dataframe(filenames: List[str]):
     df = None
     for filename in filenames:
         result = pd.DataFrame(read_cache_from_file(filename))
-        df = result if df is None else pd.concat([df, result], ignore_index=True, sort=False)
+        df = (
+            result
+            if df is None
+            else pd.concat([df, result], ignore_index=True, sort=False)
+        )
     return df
-    
