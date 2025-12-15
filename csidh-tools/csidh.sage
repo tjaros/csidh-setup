@@ -75,4 +75,36 @@ class CSIDH:
 
         return E.montgomery_model().a2()
 
-
+if __name__ == '__main__':
+    csidh = CSIDH(419, [3,5,7])
+    key = [10,-6,2]
+    public = csidh.group_action(0, key)
+    print("Public key = ", public)
+    m = 4
+    distance = 4
+    res = {}
+    cnt = 0
+    for x in range(-m,m+1):
+        three_isog = "" if x == 0 else "("+ ("-" if x > 0 else "+") *abs(x)  + ")" + "3"
+        for y in range(-m,m+1):
+            five_isog = "" if y == 0 else "("+ ("-" if y > 0 else "+") *abs(y) + ")" + "5"
+            for z in range(-m,m+1):
+                seven_isog = "" if z == 0 else "("+ ("-" if z > 0 else "+") *abs(z)  + ")" + "7"
+                only_one_degree = (x and not y and not z) or (not x and y and not z) or (not x and not y and z)
+                if abs(x) + abs(y) + abs(z) <= distance and only_one_degree:
+                    cnt += 1
+                    e = csidh.group_action(public, [x,y,z])
+                    print(x,y,z,e)
+                    x= x * -1
+                    y= y * -1
+                    z= z * -1
+                    if e in res:
+                        new = (res[e][0] + f"/{three_isog}{five_isog}{seven_isog}", res[e][1] + [3**x*5**y*7**z])
+                        res[e] = new
+                    else:
+                        res[e] = (f"{three_isog}{five_isog}{seven_isog}", [3**x*5**y*7**z])
+    for k,v in res.items():
+        print(k,v)
+    print(len(res), cnt)
+         
+    
