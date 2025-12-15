@@ -4,3 +4,6 @@
 [submodule "csidh-target"]
 	path = csidh-target
 	url = https://github.com/tjaros/csidh-target.git
+[submodule "notebooks/data"]
+	path = notebooks/data
+	url = https://github.com/tjaros/csidh-data.git
