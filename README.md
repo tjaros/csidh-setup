@@ -1,6 +1,6 @@
-# CSIDH Setup
+# CSIDH Setup (Master thesis attachments repository)
 
-This repository contains a development environment for CSIDH implementation with ChipWhisperer support using Nix.
+This repository contains a development environment for CSIDH implementation with ChipWhisperer support using Nix. This repository, including its submodules, was submitted as part of the attachments to my master's thesis.
 
 ## Prerequisites
 
@@ -85,7 +85,7 @@ ln -s ./chipwhisperer/hardware/victims/firmware/hal csidh-target/src/hal
 ### Enter the development environment
 
 ```bash
-nix develop
+nix develop --commad zsh
 ```
 
 This command will:
